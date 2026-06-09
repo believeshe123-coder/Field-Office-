@@ -41,7 +41,9 @@ textarea { resize: vertical; }
 .shield { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: white; color: var(--navy); }
 .client-picker { grid-auto-flow: column; align-items: center; text-transform: none; color: white; }
 .client-picker select { min-width: 210px; background: #042e64; color: white; border-color: #6b8db8; }
-#logout-button { margin-left: auto; color: white; background: transparent; border-color: transparent; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+#device-view-button, #logout-button { color: white; background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .18); white-space: nowrap; }
+#device-view-button { min-width: 142px; }
 
 .portal-layout { display: grid; grid-template-columns: 290px 1fr; gap: 1rem; padding: 1rem; min-height: 0; }
 .contacts-panel { padding: 1rem; display: grid; grid-template-rows: auto auto 1fr auto; gap: .75rem; min-height: 0; }
@@ -102,6 +104,7 @@ h1, h2, h3 { color: var(--navy); text-transform: uppercase; }
 .dispatch-item small { color: var(--muted); }
 .portal-links { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 0 .5rem; }
 .portal-link { gap: 1rem; text-align: left; padding: 1.2rem; border: 1px solid #bad3f6; background: linear-gradient(90deg, #eff6ff, white); color: var(--navy); text-transform: uppercase; }
+.portal-link.customer { border-color: #cbd7ea; background: linear-gradient(90deg, #f5f8fc, white); }
 .portal-link.records { border-color: #b6e0d3; background: linear-gradient(90deg, #effbf8, white); color: var(--green); }
 .portal-link span:nth-child(2) { display: grid; flex: 1; }
 .portal-link small { text-transform: none; color: #41526b; font-weight: 700; margin-top: .2rem; }
@@ -126,11 +129,203 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
   .calendar-and-dispatch { grid-template-columns: 1fr; }
   .portal-links { grid-template-columns: 1fr; gap: 1rem; }
   .top-bar { flex-wrap: wrap; height: auto; min-height: 64px; padding-block: .75rem; }
+  .contacts-panel { grid-template-rows: auto auto auto auto; }
+  .contact-list { min-height: 220px; max-height: 320px; }
+}
+
+@media (max-width: 640px) {
+  .app-shell { grid-template-rows: auto 1fr auto; }
+  .top-bar { display: grid; grid-template-columns: 1fr; gap: .75rem; align-items: stretch; }
+  .brand { min-width: 0; }
+  .welcome { display: none; }
+  .client-picker { grid-auto-flow: row; }
+  .client-picker select, .header-actions, #device-view-button, #logout-button { width: 100%; }
+  .header-actions { margin-left: 0; }
+  .portal-layout { padding: .75rem; }
+  .contact-list { min-height: 180px; max-height: 260px; }
+  .workspace-header, .calendar-toolbar, .toolbar-group, .right-tools { align-items: stretch; flex-direction: column; }
+  .workspace-header { gap: .75rem; }
+  .calendar-toolbar h2 { order: -1; }
+  .toolbar-group button, .view-switcher button, #tasks-button { width: 100%; }
+  .view-switcher { display: grid; grid-template-columns: 1fr 1fr; }
+  .calendar-card { min-height: auto; }
+  .calendar-grid { min-height: 420px; }
+  .week-grid, .day-grid, .month-grid { min-width: 620px; }
+  .month-day { min-height: 92px; }
+  .portal-link { padding: 1rem; }
+  .change-log-bar { display: grid; gap: .4rem; height: auto; padding-block: .75rem; }
+}
+
+/* Manual device preview overrides live after responsive media queries so the header switch can force a layout. */
+.app-shell[data-device-view="computer"] { grid-template-rows: 64px 1fr 48px; }
+.app-shell[data-device-view="computer"] .top-bar { display: flex; flex-wrap: nowrap; align-items: center; gap: 1.5rem; }
+.app-shell[data-device-view="computer"] .brand { min-width: 190px; }
+.app-shell[data-device-view="computer"] .welcome { display: block; }
+.app-shell[data-device-view="computer"] .client-picker { grid-auto-flow: column; }
+.app-shell[data-device-view="computer"] .client-picker select { min-width: 210px; width: auto; }
+.app-shell[data-device-view="computer"] .header-actions { margin-left: auto; width: auto; }
+.app-shell[data-device-view="computer"] #device-view-button,
+.app-shell[data-device-view="computer"] #logout-button { width: auto; }
+.app-shell[data-device-view="computer"] .portal-layout { grid-template-columns: 290px 1fr; padding: 1rem; }
+.app-shell[data-device-view="computer"] .contacts-panel { grid-template-rows: auto auto 1fr auto; }
+.app-shell[data-device-view="computer"] .contact-list { min-height: 360px; max-height: none; }
+.app-shell[data-device-view="computer"] .workspace-header,
+.app-shell[data-device-view="computer"] .calendar-toolbar,
+.app-shell[data-device-view="computer"] .toolbar-group,
+.app-shell[data-device-view="computer"] .right-tools { flex-direction: row; align-items: center; }
+.app-shell[data-device-view="computer"] .calendar-toolbar h2 { order: 0; }
+.app-shell[data-device-view="computer"] .toolbar-group button,
+.app-shell[data-device-view="computer"] .view-switcher button { width: auto; }
+.app-shell[data-device-view="computer"] #tasks-button { width: auto; }
+.app-shell[data-device-view="computer"] .view-switcher { display: flex; }
+.app-shell[data-device-view="computer"] .calendar-and-dispatch { grid-template-columns: 1fr minmax(260px, 320px); }
+.app-shell[data-device-view="computer"] .calendar-card { min-height: 610px; }
+.app-shell[data-device-view="computer"] .calendar-grid { min-height: 520px; }
+.app-shell[data-device-view="computer"] .week-grid,
+.app-shell[data-device-view="computer"] .day-grid { min-width: 780px; }
+.app-shell[data-device-view="computer"] .month-grid { min-width: 740px; }
+.app-shell[data-device-view="computer"] .month-day { min-height: 116px; }
+.app-shell[data-device-view="computer"] .portal-links { grid-template-columns: 1fr 1fr; gap: 2rem; }
+.app-shell[data-device-view="computer"] .change-log-bar { display: flex; height: auto; padding-block: 0; }
+
+.app-shell[data-device-view="tablet"] .portal-layout,
+.app-shell[data-device-view="phone"] .portal-layout { grid-template-columns: 1fr; }
+.app-shell[data-device-view="tablet"] .calendar-and-dispatch,
+.app-shell[data-device-view="phone"] .calendar-and-dispatch { grid-template-columns: 1fr; }
+.app-shell[data-device-view="tablet"] .portal-links,
+.app-shell[data-device-view="phone"] .portal-links { grid-template-columns: 1fr; gap: 1rem; }
+.app-shell[data-device-view="tablet"] .top-bar,
+.app-shell[data-device-view="phone"] .top-bar { flex-wrap: wrap; height: auto; min-height: 64px; padding-block: .75rem; }
+.app-shell[data-device-view="tablet"] .contacts-panel { grid-template-rows: auto auto auto auto; }
+.app-shell[data-device-view="tablet"] .contact-list { min-height: 220px; max-height: 320px; }
+.app-shell[data-device-view="phone"] { grid-template-rows: auto 1fr auto; }
+.app-shell[data-device-view="phone"] .top-bar { display: grid; grid-template-columns: 1fr; gap: .75rem; align-items: stretch; }
+.app-shell[data-device-view="phone"] .brand { min-width: 0; }
+.app-shell[data-device-view="phone"] .welcome { display: none; }
+.app-shell[data-device-view="phone"] .client-picker { grid-auto-flow: row; }
+.app-shell[data-device-view="phone"] .client-picker select,
+.app-shell[data-device-view="phone"] .header-actions,
+.app-shell[data-device-view="phone"] #device-view-button,
+.app-shell[data-device-view="phone"] #logout-button { width: 100%; }
+.app-shell[data-device-view="phone"] .header-actions { margin-left: 0; }
+.app-shell[data-device-view="phone"] .portal-layout { padding: .75rem; }
+.app-shell[data-device-view="phone"] .contacts-panel { grid-template-rows: auto auto auto auto; }
+.app-shell[data-device-view="phone"] .contact-list { min-height: 180px; max-height: 260px; }
+.app-shell[data-device-view="phone"] .workspace-header,
+.app-shell[data-device-view="phone"] .calendar-toolbar,
+.app-shell[data-device-view="phone"] .toolbar-group,
+.app-shell[data-device-view="phone"] .right-tools { align-items: stretch; flex-direction: column; }
+.app-shell[data-device-view="phone"] .workspace-header { gap: .75rem; }
+.app-shell[data-device-view="phone"] .calendar-toolbar h2 { order: -1; }
+.app-shell[data-device-view="phone"] .toolbar-group button,
+.app-shell[data-device-view="phone"] .view-switcher button,
+.app-shell[data-device-view="phone"] #tasks-button { width: 100%; }
+.app-shell[data-device-view="phone"] .view-switcher { display: grid; grid-template-columns: 1fr 1fr; }
+.app-shell[data-device-view="phone"] .calendar-card { min-height: auto; }
+.app-shell[data-device-view="phone"] .calendar-grid { min-height: 420px; }
+.app-shell[data-device-view="phone"] .week-grid,
+.app-shell[data-device-view="phone"] .day-grid,
+.app-shell[data-device-view="phone"] .month-grid { min-width: 620px; }
+.app-shell[data-device-view="phone"] .month-day { min-height: 92px; }
+.app-shell[data-device-view="phone"] .portal-link { padding: 1rem; }
+.app-shell[data-device-view="phone"] .change-log-bar { display: grid; gap: .4rem; height: auto; padding-block: .75rem; }
+
+.placeholder-page { padding: 1rem; min-height: 0; }
+.placeholder-card { min-height: 620px; padding: 1.25rem; display: grid; align-content: start; gap: 1.25rem; }
+.placeholder-heading { display: flex; align-items: center; gap: 1rem; }
+.placeholder-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 14px; background: #eef5ff; color: var(--navy); font-size: 1.8rem; }
+.placeholder-heading p { margin: 0 0 .25rem; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.placeholder-heading h1 { margin: 0; }
+.placeholder-copy { margin: 0; max-width: 760px; color: #41526b; font-weight: 700; }
+.placeholder-content { display: grid; gap: 1rem; }
+.basic-screen-panel, .dispatch-page-item { border: 1px solid var(--line); border-radius: 10px; background: #fbfdff; padding: 1rem; }
+.basic-screen-panel h2 { margin: 0 0 .75rem; }
+.basic-screen-panel p { margin: 0 0 1rem; color: #41526b; font-weight: 700; }
+.basic-screen-panel ul { margin: 0; padding-left: 1.25rem; color: #41526b; font-weight: 700; }
+.placeholder-actions { display: flex; justify-content: flex-end; }
+.dispatch-page-list { display: grid; gap: .75rem; }
+.dispatch-page-item strong { display: block; color: var(--navy); }
+.dispatch-page-item small { display: block; margin-top: .25rem; color: var(--muted); font-weight: 700; }
+.dispatch-page-item p { margin: .75rem 0 0; color: #41526b; }
+
+@media (max-width: 640px) {
+  .placeholder-page { padding: .75rem; }
+  .placeholder-card { min-height: auto; padding: 1rem; }
+  .placeholder-heading { align-items: flex-start; }
+  .placeholder-actions .secondary { width: 100%; }
+}
+
+
+.day-head.today, .grid-cell.today, .month-day.today, .mini-days span.today {
+  box-shadow: inset 0 0 0 2px #f4b400;
+  background: #fff8df;
+}
+
+.dispatch-range-toolbar { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr)) auto; gap: 1rem; align-items: end; }
+.dispatch-page-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); gap: 1rem; align-items: start; }
+.dispatch-schedule-panel, .dispatch-list-panel { border: 1px solid var(--line); border-radius: 10px; background: #fbfdff; padding: 1rem; }
+.dispatch-section-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; margin-bottom: 1rem; }
+.dispatch-section-heading h2 { margin: 0; }
+.dispatch-section-heading small { color: var(--muted); font-weight: 800; }
+.dispatch-calendar-title { color: var(--navy); font-weight: 900; margin-bottom: .65rem; text-transform: uppercase; }
+.dispatch-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(72px, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: white; }
+.dispatch-calendar-head { padding: .6rem .4rem; background: #eef5ff; color: var(--navy); font-size: .75rem; font-weight: 900; text-align: center; text-transform: uppercase; }
+.dispatch-calendar-day { min-height: 96px; border-top: 1px solid var(--line); border-right: 1px solid var(--line); padding: .45rem; display: grid; align-content: start; gap: .25rem; }
+.dispatch-calendar-day:nth-child(7n + 7) { border-right: 0; }
+.dispatch-calendar-day strong { color: var(--navy); }
+.dispatch-calendar-day span { display: block; border-left: 3px solid var(--blue); border-radius: 4px; background: #dceaff; color: var(--navy); padding: .25rem; font-size: .72rem; font-weight: 800; }
+.dispatch-calendar-day.muted { background: #f8fafc; color: #9aa7b8; }
+.dispatch-calendar-day.in-range { background: #edf6ff; box-shadow: inset 0 0 0 2px rgba(10, 77, 162, .2); }
+.dispatch-calendar-day.today, .dispatch-page-item.today { box-shadow: inset 0 0 0 3px #f4b400; background: #fff8df; }
+
+@media (max-width: 980px) {
+  .dispatch-page-layout { grid-template-columns: 1fr; }
+  .dispatch-range-toolbar { grid-template-columns: 1fr 1fr; }
+  .dispatch-range-toolbar .secondary { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .dispatch-range-toolbar { grid-template-columns: 1fr; }
+  .dispatch-calendar-grid { grid-template-columns: repeat(7, minmax(58px, 1fr)); overflow-x: auto; }
+  .dispatch-calendar-day { min-height: 82px; }
 }
 
 @media print {
   body * { visibility: hidden; }
-  #dispatch-panel, #dispatch-panel * { visibility: visible; }
-  #dispatch-panel { position: absolute; inset: 0; border: 0; }
-  #print-dispatch, #close-dispatch { display: none; }
+  #dispatch-panel, #dispatch-panel *, #placeholder-page, #placeholder-page * { visibility: visible; }
+  #dispatch-panel, #placeholder-page { position: absolute; inset: 0; border: 0; }
+  #print-dispatch, #close-dispatch, #back-to-dashboard, .placeholder-actions, .dispatch-range-toolbar { display: none; }
+}
+
+.main-view-switcher { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: white; box-shadow: 0 1px 4px rgba(16, 33, 63, .05); }
+.main-view-switcher button { border-radius: 0; background: white; color: var(--navy); padding: .45rem .75rem; font-size: .78rem; }
+.main-view-switcher button.active { background: var(--navy); color: white; }
+.task-board-card { padding: 1rem; min-height: 610px; display: grid; grid-template-rows: auto 1fr; gap: 1rem; }
+.task-board-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.task-board-header h2 { margin: 0; font-size: 1rem; }
+.task-board-header p { margin: .25rem 0 0; color: var(--muted); font-weight: 700; }
+.task-form { display: grid; grid-template-columns: minmax(220px, 1fr) auto; gap: .5rem; align-items: end; min-width: min(460px, 100%); }
+.task-board { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 1rem; min-height: 0; }
+.task-column { border: 1px solid var(--line); border-radius: 10px; background: #fbfdff; display: grid; grid-template-rows: auto 1fr; min-height: 420px; transition: border-color .15s ease, box-shadow .15s ease; }
+.task-column.drag-over { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(10, 77, 162, .12); }
+.task-column-header { display: flex; justify-content: space-between; align-items: center; padding: .85rem; border-bottom: 1px solid var(--line); }
+.task-column-header h3 { margin: 0; font-size: .9rem; }
+.task-column-header span { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 999px; background: #eef5ff; color: var(--navy); font-weight: 900; }
+.task-drop-zone { display: grid; align-content: start; gap: .65rem; padding: .85rem; }
+.task-card { border: 1px solid #bad3f6; border-left: 5px solid var(--blue); border-radius: 8px; background: white; padding: .85rem; box-shadow: 0 1px 5px rgba(16, 33, 63, .06); cursor: grab; }
+.task-card:active { cursor: grabbing; }
+.task-card strong { display: block; color: var(--navy); }
+.task-card small { display: block; margin-top: .35rem; color: var(--muted); font-weight: 700; }
+.empty-task-column { margin: auto; color: var(--muted); font-weight: 800; text-align: center; }
+
+@media (max-width: 980px) {
+  .task-board-header { align-items: stretch; flex-direction: column; }
+  .task-board { grid-template-columns: 1fr; }
+  .task-column { min-height: 220px; }
+}
+
+@media (max-width: 640px) {
+  .task-form { grid-template-columns: 1fr; min-width: 0; }
+  .task-form .primary { width: 100%; }
+  .task-board-card { min-height: auto; }
 }

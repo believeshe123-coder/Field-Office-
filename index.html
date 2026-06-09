@@ -39,10 +39,13 @@
           Client:
           <select id="client-select"></select>
         </label>
-        <button id="logout-button" class="ghost-button">⇱ Logout</button>
+        <div class="header-actions">
+          <button id="device-view-button" class="ghost-button" type="button" aria-live="polite">Auto View</button>
+          <button id="logout-button" class="ghost-button" type="button">⇱ Logout</button>
+        </div>
       </header>
 
-      <main class="portal-layout">
+      <main id="portal-layout" class="portal-layout">
         <aside class="contacts-panel card">
           <div class="panel-title-row">
             <h2>👥 Client Contacts</h2>
@@ -59,10 +62,15 @@
         <section class="workspace">
           <div class="workspace-header card">
             <h1>▥ <span id="portal-title">Customer Portal</span></h1>
-            <button id="tasks-button" class="secondary">▣ Tasks <span id="task-count"></span></button>
+            <button id="tasks-button" class="secondary" type="button">▣ Tasks <span id="task-count"></span></button>
           </div>
 
-          <section class="calendar-card card">
+          <div class="main-view-switcher" role="group" aria-label="Main workspace view">
+            <button class="active" type="button" data-main-view="schedule">Schedule</button>
+            <button type="button" data-main-view="tasks">Task</button>
+          </div>
+
+          <section id="schedule-main-view" class="calendar-card card">
             <div class="calendar-toolbar">
               <div class="toolbar-group">
                 <button id="prev-date" class="icon-button">‹</button>
@@ -96,18 +104,52 @@
             </div>
           </section>
 
+          <section id="task-main-view" class="task-board-card card hidden">
+            <div class="task-board-header">
+              <div>
+                <h2>▣ Task Board</h2>
+                <p>Drag added tasks between To Do, In Progress, and Done.</p>
+              </div>
+              <form id="task-form" class="task-form">
+                <input id="task-title-input" type="text" placeholder="Add a task..." required />
+                <button class="primary" type="submit">＋ Add Task</button>
+              </form>
+            </div>
+            <div id="task-board" class="task-board" aria-live="polite"></div>
+          </section>
+
           <section class="portal-links">
-            <button class="portal-link recruiting">
+            <button class="portal-link customer" data-page="customer" type="button">
+              <span class="portal-icon">▥</span>
+              <span><strong>Customer Portal</strong><small>Open the basic customer portal landing screen.</small></span>
+              <b>›</b>
+            </button>
+            <button class="portal-link recruiting" data-page="recruiting" type="button">
               <span class="portal-icon">👥</span>
               <span><strong>Recruiting Portal</strong><small>Access recruiting tools, applicant tracking, and hiring resources.</small></span>
               <b>›</b>
             </button>
-            <button class="portal-link records">
+            <button class="portal-link records" data-page="records" type="button">
               <span class="portal-icon">💵</span>
               <span><strong>Invoicing / Records Portal</strong><small>View invoices, payment history, and important records.</small></span>
               <b>›</b>
             </button>
           </section>
+        </section>
+      </main>
+
+      <main id="placeholder-page" class="placeholder-page hidden" aria-live="polite">
+        <section class="placeholder-card card">
+          <button id="back-to-dashboard" class="ghost-button" type="button">‹ Back to Main Screen</button>
+          <div class="placeholder-heading">
+            <span id="placeholder-icon" class="placeholder-icon">▥</span>
+            <div>
+              <p id="placeholder-kicker">Portal</p>
+              <h1 id="placeholder-title">Basic Screen</h1>
+            </div>
+          </div>
+          <p id="placeholder-copy" class="placeholder-copy">This area is ready for future portal content.</p>
+          <div id="placeholder-content" class="placeholder-content"></div>
         </section>
       </main>
 
