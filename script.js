@@ -1,3 +1,5 @@
+import { createClient } from "./utils/supabase/client.js";
+
 const STORAGE_KEY = "safeguard-client-portal-state";
 const dayMs = 86_400_000;
 const clients = ["Test 1", "Acme Logistics", "North Ridge Medical"];
@@ -42,6 +44,9 @@ let currentView = "week";
 let activeMainView = "schedule";
 let dispatchStartDate = null;
 let dispatchEndDate = null;
+let supabaseClient = null;
+let isUploading = false;
+const uploadBucket = "uploads";
 
 const els = {
   loginScreen: document.querySelector("#login-screen"),
@@ -86,7 +91,14 @@ const els = {
   dispatchList: document.querySelector("#dispatch-list"),
   printDispatch: document.querySelector("#print-dispatch"),
   logDialog: document.querySelector("#log-dialog"),
-  logList: document.querySelector("#change-log-list")
+  logList: document.querySelector("#change-log-list"),
+  supabaseStatus: document.querySelector("#supabase-status"),
+  supabaseCheckButton: document.querySelector("#supabase-check-button"),
+  uploadForm: document.querySelector("#upload-form"),
+  uploadFile: document.querySelector("#upload-file"),
+  uploadButton: document.querySelector("#upload-button"),
+  uploadMessage: document.querySelector("#upload-message"),
+  uploadedFiles: document.querySelector("#uploaded-files")
 };
 
 function loadState() {
@@ -94,7 +106,7 @@ function loadState() {
     loggedIn: false,
     selectedClient: clients[0],
     deviceView: "auto",
-    clients: Object.fromEntries(clients.map((client) => [client, { contacts: [], events: [], logs: [], memory: { notes: "", updatedAt: null }, tasks: [] }]))
+    clients: Object.fromEntries(clients.map((client) => [client, { contacts: [], events: [], logs: [], memory: { notes: "", updatedAt: null }, tasks: [], uploads: [] }]))
   };
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -113,12 +125,17 @@ function mergeState(fallback, stored) {
     stored.clients[client].logs ??= [];
     stored.clients[client].memory = normalizeMemory(stored.clients[client].memory);
     stored.clients[client].tasks = normalizeTasks(stored.clients[client].tasks);
+    stored.clients[client].uploads = normalizeUploads(stored.clients[client].uploads);
   });
   return { ...fallback, ...stored };
 }
 
 function normalizeTasks(tasks) {
   return Array.isArray(tasks) ? tasks : [];
+}
+
+function normalizeUploads(uploads) {
+  return Array.isArray(uploads) ? uploads : [];
 }
 
 function normalizeMemory(memory) {
@@ -192,9 +209,168 @@ function init() {
   document.querySelector("#dispatch-button").addEventListener("click", () => openPortalPage("dispatch"));
   document.querySelector("#close-dispatch").addEventListener("click", () => els.dispatchPanel.classList.add("hidden"));
   els.printDispatch.addEventListener("click", () => window.print());
+  els.supabaseCheckButton.addEventListener("click", runSupabaseSmokeCheck);
+  els.uploadForm.addEventListener("submit", uploadSelectedFile);
   document.querySelector("#change-log-toggle").addEventListener("click", openLogDialog);
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
   if (state.loggedIn) showApp();
+  initializeSupabase();
+}
+
+function initializeSupabase() {
+  try {
+    supabaseClient = createClient();
+    setSupabaseStatus("Ready to check", "pending");
+    setUploadMessage("Supabase configuration loaded. Click Check Connection to verify the uploads bucket.");
+    runSupabaseSmokeCheck();
+  } catch (error) {
+    console.error("Supabase initialization failed:", error);
+    setSupabaseStatus("Config error", "error");
+    setUploadMessage(error.message, "error");
+    els.uploadButton.disabled = true;
+  }
+}
+
+async function runSupabaseSmokeCheck() {
+  if (!supabaseClient) return;
+  setSupabaseStatus("Checking...", "pending");
+  setUploadMessage(`Checking Supabase Storage bucket "${uploadBucket}"...`);
+
+  const { data, error } = await supabaseClient.storage.from(uploadBucket).list("", { limit: 1 });
+  if (error) {
+    console.error("Supabase smoke check failed:", error);
+    setSupabaseStatus("Connection failed", "error");
+    setUploadMessage(
+      `Supabase connected, but the "${uploadBucket}" bucket check failed: ${error.message}. Confirm the bucket exists and Storage policies allow listing/uploading for this key.`,
+      "error"
+    );
+    return;
+  }
+
+  console.info("Supabase smoke check passed:", data);
+  setSupabaseStatus("Connected", "success");
+  setUploadMessage(`Connected to Supabase and verified the "${uploadBucket}" bucket.`);
+}
+
+async function uploadSelectedFile(event) {
+  event.preventDefault();
+  if (!supabaseClient || isUploading) return;
+
+  const file = els.uploadFile.files?.[0];
+  if (!file) {
+    setUploadMessage("Choose a file before uploading.", "error");
+    return;
+  }
+
+  const path = buildStoragePath(file);
+  isUploading = true;
+  els.uploadButton.disabled = true;
+  setSupabaseStatus("Uploading...", "pending");
+  setUploadMessage(`Uploading ${file.name} to ${uploadBucket}/${path}...`);
+
+  const { data, error } = await supabaseClient.storage.from(uploadBucket).upload(path, file, {
+    cacheControl: "3600",
+    upsert: false
+  });
+
+  isUploading = false;
+  els.uploadButton.disabled = false;
+
+  if (error) {
+    console.error("Supabase upload failed:", error);
+    setSupabaseStatus("Upload failed", "error");
+    setUploadMessage(`Upload failed: ${error.message}. If this is a duplicate filename, choose another file or retry later.`, "error");
+    return;
+  }
+
+  const publicUrl = getPublicUploadUrl(data.path);
+  const upload = {
+    id: crypto.randomUUID(),
+    name: file.name,
+    size: file.size,
+    type: file.type || "application/octet-stream",
+    path: data.path,
+    publicUrl,
+    uploadedAt: new Date().toISOString()
+  };
+
+  clientData().uploads.unshift(upload);
+  logChange(`Uploaded file ${file.name} to Supabase Storage.`);
+  const metadataSaved = await saveUploadMetadata(upload);
+  els.uploadForm.reset();
+  setSupabaseStatus("Upload complete", "success");
+  setUploadMessage(
+    metadataSaved
+      ? `Uploaded ${file.name} successfully and saved metadata.`
+      : `Uploaded ${file.name} successfully. Metadata table insert was skipped or blocked; see console for details.`
+  );
+  renderUploads();
+}
+
+async function saveUploadMetadata(upload) {
+  const { error } = await supabaseClient.from("uploaded_files").insert({
+    client_name: selectedClient,
+    file_name: upload.name,
+    storage_bucket: uploadBucket,
+    storage_path: upload.path,
+    content_type: upload.type,
+    size_bytes: upload.size,
+    public_url: upload.publicUrl
+  });
+
+  if (error) {
+    console.warn("Uploaded file metadata was not saved to uploaded_files:", error);
+    return false;
+  }
+
+  return true;
+}
+
+function renderUploads() {
+  const uploads = clientData().uploads;
+  els.uploadedFiles.innerHTML = uploads.length
+    ? uploads.map((upload) => `
+      <article class="uploaded-file">
+        <strong>${escapeHtml(upload.name)}</strong>
+        <small>${formatBytes(upload.size)} • ${new Date(upload.uploadedAt).toLocaleString()}</small>
+        <code>${escapeHtml(upload.path)}</code>
+        <a href="${escapeHtml(upload.publicUrl)}" target="_blank" rel="noreferrer">Open public URL</a>
+      </article>`).join("")
+    : `<p class="empty-uploads">No cloud uploads recorded for ${escapeHtml(selectedClient)} yet.</p>`;
+}
+
+function buildStoragePath(file) {
+  const safeClient = slugify(selectedClient);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const randomPart = crypto.randomUUID();
+  const safeName = file.name.split("/").pop().replace(/[^a-zA-Z0-9._-]/g, "-");
+  return `${safeClient}/${timestamp}-${randomPart}-${safeName}`;
+}
+
+function getPublicUploadUrl(path) {
+  const { data } = supabaseClient.storage.from(uploadBucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function setSupabaseStatus(message, status = "pending") {
+  els.supabaseStatus.textContent = message;
+  els.supabaseStatus.dataset.status = status;
+}
+
+function setUploadMessage(message, status = "info") {
+  els.uploadMessage.textContent = message;
+  els.uploadMessage.dataset.status = status;
+}
+
+function slugify(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "client";
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes)) return "Unknown size";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function showApp() {
@@ -207,6 +383,7 @@ function renderAll() {
   els.clientSelect.value = selectedClient;
   els.portalTitle.textContent = `Customer Portal - ${selectedClient}`;
   els.taskCount.textContent = clientData().tasks.length ? `(${clientData().tasks.length})` : "";
+  renderUploads();
   renderContacts();
   renderMemory();
   renderCalendar();
