@@ -68,6 +68,10 @@ const els = {
   taskForm: document.querySelector("#task-form"),
   taskTitleInput: document.querySelector("#task-title-input"),
   taskBoard: document.querySelector("#task-board"),
+  memoryNotes: document.querySelector("#memory-notes"),
+  memoryStatus: document.querySelector("#memory-status"),
+  saveMemoryButton: document.querySelector("#save-memory-button"),
+  clearMemoryButton: document.querySelector("#clear-memory-button"),
   contactSearch: document.querySelector("#contact-search"),
   contactList: document.querySelector("#contact-list"),
   contactDetail: document.querySelector("#contact-detail"),
@@ -90,7 +94,7 @@ function loadState() {
     loggedIn: false,
     selectedClient: clients[0],
     deviceView: "auto",
-    clients: Object.fromEntries(clients.map((client) => [client, { contacts: [], events: [], logs: [], tasks: [] }]))
+    clients: Object.fromEntries(clients.map((client) => [client, { contacts: [], events: [], logs: [], memory: { notes: "", updatedAt: null }, tasks: [] }]))
   };
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -107,6 +111,7 @@ function mergeState(fallback, stored) {
     stored.clients[client].contacts ??= [];
     stored.clients[client].events ??= [];
     stored.clients[client].logs ??= [];
+    stored.clients[client].memory = normalizeMemory(stored.clients[client].memory);
     stored.clients[client].tasks = normalizeTasks(stored.clients[client].tasks);
   });
   return { ...fallback, ...stored };
@@ -114,6 +119,14 @@ function mergeState(fallback, stored) {
 
 function normalizeTasks(tasks) {
   return Array.isArray(tasks) ? tasks : [];
+}
+
+function normalizeMemory(memory) {
+  if (typeof memory === "string") return { notes: memory, updatedAt: null };
+  return {
+    notes: typeof memory?.notes === "string" ? memory.notes : "",
+    updatedAt: typeof memory?.updatedAt === "string" ? memory.updatedAt : null
+  };
 }
 
 function saveState() {
@@ -156,8 +169,10 @@ function init() {
   els.backToDashboard.addEventListener("click", showDashboard);
   document.querySelectorAll("[data-page]").forEach((button) => button.addEventListener("click", () => openPortalPage(button.dataset.page)));
   document.querySelectorAll("[data-main-view]").forEach((button) => button.addEventListener("click", () => setMainView(button.dataset.mainView)));
-  document.querySelector("#tasks-button").addEventListener("click", () => setMainView("tasks"));
   els.taskForm.addEventListener("submit", addTask);
+  els.saveMemoryButton.addEventListener("click", saveMemory);
+  els.clearMemoryButton.addEventListener("click", clearMemory);
+  els.memoryNotes.addEventListener("input", () => setMemoryStatus("Unsaved", true));
   els.clientSelect.addEventListener("change", () => {
     selectedClient = els.clientSelect.value;
     selectedContactId = null;
@@ -193,6 +208,7 @@ function renderAll() {
   els.portalTitle.textContent = `Customer Portal - ${selectedClient}`;
   els.taskCount.textContent = clientData().tasks.length ? `(${clientData().tasks.length})` : "";
   renderContacts();
+  renderMemory();
   renderCalendar();
   renderTasks();
   setMainView(activeMainView);
@@ -202,6 +218,29 @@ function showDashboard() {
   els.placeholderPage.classList.add("hidden");
   els.portalLayout.classList.remove("hidden");
   renderAll();
+}
+
+function renderMemory() {
+  const memory = clientData().memory;
+  els.memoryNotes.value = memory.notes;
+  setMemoryStatus(memory.updatedAt ? `Saved ${new Date(memory.updatedAt).toLocaleString()}` : "Ready");
+}
+
+function saveMemory() {
+  const notes = els.memoryNotes.value.trim();
+  clientData().memory = { notes, updatedAt: new Date().toISOString() };
+  logChange(notes ? "Updated local memory." : "Cleared local memory.");
+  setMemoryStatus("Saved just now");
+}
+
+function clearMemory() {
+  els.memoryNotes.value = "";
+  saveMemory();
+}
+
+function setMemoryStatus(message, isUnsaved = false) {
+  els.memoryStatus.textContent = message;
+  els.memoryStatus.classList.toggle("unsaved", isUnsaved);
 }
 
 function setMainView(view) {

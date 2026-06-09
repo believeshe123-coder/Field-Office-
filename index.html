@@ -57,17 +57,33 @@
           </div>
           <div id="contact-list" class="contact-list"></div>
           <section id="contact-detail" class="contact-detail">Select a contact to view details.</section>
+
+          <section class="local-memory-card" aria-labelledby="local-memory-title">
+            <div class="local-memory-heading">
+              <div>
+                <h2 id="local-memory-title">🧠 Local Memory</h2>
+                <p>Private notes saved on this device for the selected client.</p>
+              </div>
+              <span id="memory-status" class="memory-status" aria-live="polite">Ready</span>
+            </div>
+            <textarea id="memory-notes" rows="6" placeholder="Remember client preferences, recurring reminders, or office context..."></textarea>
+            <div class="memory-actions">
+              <button id="save-memory-button" class="secondary small" type="button">Save Memory</button>
+              <button id="clear-memory-button" class="ghost-button small" type="button">Clear</button>
+            </div>
+          </section>
         </aside>
 
         <section class="workspace">
           <div class="workspace-header card">
-            <h1>▥ <span id="portal-title">Customer Portal</span></h1>
-            <button id="tasks-button" class="secondary" type="button">▣ Tasks <span id="task-count"></span></button>
+            <button id="portal-title-button" class="portal-title-button" data-page="customer" type="button" aria-label="Open Customer Portal page">
+              ▥ <span id="portal-title">Customer Portal</span>
+            </button>
           </div>
 
           <div class="main-view-switcher" role="group" aria-label="Main workspace view">
             <button class="active" type="button" data-main-view="schedule">Schedule</button>
-            <button type="button" data-main-view="tasks">Task</button>
+            <button type="button" data-main-view="tasks">Task <span id="task-count"></span></button>
           </div>
 
           <section id="schedule-main-view" class="calendar-card card">
@@ -119,11 +135,6 @@
           </section>
 
           <section class="portal-links">
-            <button class="portal-link customer" data-page="customer" type="button">
-              <span class="portal-icon">▥</span>
-              <span><strong>Customer Portal</strong><small>Open the basic customer portal landing screen.</small></span>
-              <b>›</b>
-            </button>
             <button class="portal-link recruiting" data-page="recruiting" type="button">
               <span class="portal-icon">👥</span>
               <span><strong>Recruiting Portal</strong><small>Access recruiting tools, applicant tracking, and hiring resources.</small></span>
@@ -140,12 +151,14 @@
 
       <main id="placeholder-page" class="placeholder-page hidden" aria-live="polite">
         <section class="placeholder-card card">
-          <button id="back-to-dashboard" class="ghost-button" type="button">‹ Back to Main Screen</button>
           <div class="placeholder-heading">
             <span id="placeholder-icon" class="placeholder-icon">▥</span>
-            <div>
+            <div class="placeholder-title-group">
               <p id="placeholder-kicker">Portal</p>
-              <h1 id="placeholder-title">Basic Screen</h1>
+              <div class="placeholder-title-row">
+                <h1 id="placeholder-title">Basic Screen</h1>
+                <button id="back-to-dashboard" class="ghost-button" type="button">Main Dashboard</button>
+              </div>
             </div>
           </div>
           <p id="placeholder-copy" class="placeholder-copy">This area is ready for future portal content.</p>

@@ -46,11 +46,11 @@ textarea { resize: vertical; }
 #device-view-button { min-width: 142px; }
 
 .portal-layout { display: grid; grid-template-columns: 290px 1fr; gap: 1rem; padding: 1rem; min-height: 0; }
-.contacts-panel { padding: 1rem; display: grid; grid-template-rows: auto auto 1fr auto; gap: .75rem; min-height: 0; }
+.contacts-panel { padding: 1rem; display: grid; grid-template-rows: auto auto minmax(180px, 1fr) auto auto; gap: .75rem; min-height: 0; }
 .panel-title-row, .workspace-header, .calendar-toolbar, .toolbar-group, .view-switcher, .portal-link { display: flex; align-items: center; }
 .panel-title-row { justify-content: space-between; gap: .75rem; }
 h1, h2, h3 { color: var(--navy); text-transform: uppercase; }
-.panel-title-row h2, .workspace-header h1 { margin: 0; font-size: 1rem; white-space: nowrap; }
+.panel-title-row h2, .portal-title-button { margin: 0; font-size: 1rem; white-space: nowrap; }
 .search-wrap { position: relative; }
 .search-wrap input { width: 100%; padding-right: 2rem; }
 .search-wrap span { position: absolute; right: .7rem; top: .65rem; color: var(--muted); }
@@ -67,10 +67,19 @@ h1, h2, h3 { color: var(--navy); text-transform: uppercase; }
 .contact-detail dt { font-weight: 800; color: var(--navy); }
 .contact-detail dd { margin: 0; }
 .edit-contact { float: right; }
+.local-memory-card { border: 1px solid var(--line); border-radius: 8px; background: #fbfdff; padding: .85rem; display: grid; gap: .75rem; }
+.local-memory-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; }
+.local-memory-heading h2 { margin: 0; font-size: .9rem; }
+.local-memory-heading p { margin: .2rem 0 0; color: var(--muted); font-size: .76rem; font-weight: 700; text-transform: none; }
+.memory-status { border-radius: 999px; background: #e7f7f2; color: var(--green); padding: .25rem .5rem; font-size: .68rem; font-weight: 900; white-space: nowrap; text-transform: uppercase; }
+.memory-status.unsaved { background: #fff1d7; color: #875800; }
+#memory-notes { min-height: 120px; width: 100%; }
+.memory-actions { display: flex; justify-content: flex-end; gap: .5rem; }
 
 .workspace { display: grid; grid-template-rows: auto 1fr auto; gap: 1rem; min-width: 0; }
 .workspace-header { justify-content: space-between; padding: 1rem 1.25rem; }
-#tasks-button { min-width: 148px; }
+.portal-title-button { background: transparent; color: var(--navy); padding: 0; text-align: left; }
+.portal-title-button:hover, .portal-title-button:focus-visible { text-decoration: underline; text-underline-offset: .2rem; }
 .calendar-card { padding: .75rem; min-height: 610px; display: grid; grid-template-rows: auto 1fr; }
 .calendar-toolbar { justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
 .calendar-toolbar h2 { margin: 0; font-size: 1rem; text-align: center; flex: 1; }
@@ -129,7 +138,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
   .calendar-and-dispatch { grid-template-columns: 1fr; }
   .portal-links { grid-template-columns: 1fr; gap: 1rem; }
   .top-bar { flex-wrap: wrap; height: auto; min-height: 64px; padding-block: .75rem; }
-  .contacts-panel { grid-template-rows: auto auto auto auto; }
+  .contacts-panel { grid-template-rows: auto auto auto auto auto; }
   .contact-list { min-height: 220px; max-height: 320px; }
 }
 
@@ -146,7 +155,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
   .workspace-header, .calendar-toolbar, .toolbar-group, .right-tools { align-items: stretch; flex-direction: column; }
   .workspace-header { gap: .75rem; }
   .calendar-toolbar h2 { order: -1; }
-  .toolbar-group button, .view-switcher button, #tasks-button { width: 100%; }
+  .toolbar-group button, .view-switcher button { width: 100%; }
   .view-switcher { display: grid; grid-template-columns: 1fr 1fr; }
   .calendar-card { min-height: auto; }
   .calendar-grid { min-height: 420px; }
@@ -167,7 +176,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
 .app-shell[data-device-view="computer"] #device-view-button,
 .app-shell[data-device-view="computer"] #logout-button { width: auto; }
 .app-shell[data-device-view="computer"] .portal-layout { grid-template-columns: 290px 1fr; padding: 1rem; }
-.app-shell[data-device-view="computer"] .contacts-panel { grid-template-rows: auto auto 1fr auto; }
+.app-shell[data-device-view="computer"] .contacts-panel { grid-template-rows: auto auto minmax(180px, 1fr) auto auto; }
 .app-shell[data-device-view="computer"] .contact-list { min-height: 360px; max-height: none; }
 .app-shell[data-device-view="computer"] .workspace-header,
 .app-shell[data-device-view="computer"] .calendar-toolbar,
@@ -176,7 +185,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
 .app-shell[data-device-view="computer"] .calendar-toolbar h2 { order: 0; }
 .app-shell[data-device-view="computer"] .toolbar-group button,
 .app-shell[data-device-view="computer"] .view-switcher button { width: auto; }
-.app-shell[data-device-view="computer"] #tasks-button { width: auto; }
+.app-shell[data-device-view="computer"] .portal-title-button { width: auto; }
 .app-shell[data-device-view="computer"] .view-switcher { display: flex; }
 .app-shell[data-device-view="computer"] .calendar-and-dispatch { grid-template-columns: 1fr minmax(260px, 320px); }
 .app-shell[data-device-view="computer"] .calendar-card { min-height: 610px; }
@@ -196,7 +205,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
 .app-shell[data-device-view="phone"] .portal-links { grid-template-columns: 1fr; gap: 1rem; }
 .app-shell[data-device-view="tablet"] .top-bar,
 .app-shell[data-device-view="phone"] .top-bar { flex-wrap: wrap; height: auto; min-height: 64px; padding-block: .75rem; }
-.app-shell[data-device-view="tablet"] .contacts-panel { grid-template-rows: auto auto auto auto; }
+.app-shell[data-device-view="tablet"] .contacts-panel { grid-template-rows: auto auto auto auto auto; }
 .app-shell[data-device-view="tablet"] .contact-list { min-height: 220px; max-height: 320px; }
 .app-shell[data-device-view="phone"] { grid-template-rows: auto 1fr auto; }
 .app-shell[data-device-view="phone"] .top-bar { display: grid; grid-template-columns: 1fr; gap: .75rem; align-items: stretch; }
@@ -209,17 +218,19 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
 .app-shell[data-device-view="phone"] #logout-button { width: 100%; }
 .app-shell[data-device-view="phone"] .header-actions { margin-left: 0; }
 .app-shell[data-device-view="phone"] .portal-layout { padding: .75rem; }
-.app-shell[data-device-view="phone"] .contacts-panel { grid-template-rows: auto auto auto auto; }
+.app-shell[data-device-view="phone"] .contacts-panel { grid-template-rows: auto auto auto auto auto; }
 .app-shell[data-device-view="phone"] .contact-list { min-height: 180px; max-height: 260px; }
+.app-shell[data-device-view="phone"] .local-memory-heading,
+.app-shell[data-device-view="phone"] .memory-actions { display: grid; }
 .app-shell[data-device-view="phone"] .workspace-header,
 .app-shell[data-device-view="phone"] .calendar-toolbar,
 .app-shell[data-device-view="phone"] .toolbar-group,
 .app-shell[data-device-view="phone"] .right-tools { align-items: stretch; flex-direction: column; }
 .app-shell[data-device-view="phone"] .workspace-header { gap: .75rem; }
+.app-shell[data-device-view="phone"] .portal-title-button { width: 100%; }
 .app-shell[data-device-view="phone"] .calendar-toolbar h2 { order: -1; }
 .app-shell[data-device-view="phone"] .toolbar-group button,
-.app-shell[data-device-view="phone"] .view-switcher button,
-.app-shell[data-device-view="phone"] #tasks-button { width: 100%; }
+.app-shell[data-device-view="phone"] .view-switcher button { width: 100%; }
 .app-shell[data-device-view="phone"] .view-switcher { display: grid; grid-template-columns: 1fr 1fr; }
 .app-shell[data-device-view="phone"] .calendar-card { min-height: auto; }
 .app-shell[data-device-view="phone"] .calendar-grid { min-height: 420px; }
@@ -233,9 +244,12 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
 .placeholder-page { padding: 1rem; min-height: 0; }
 .placeholder-card { min-height: 620px; padding: 1.25rem; display: grid; align-content: start; gap: 1.25rem; }
 .placeholder-heading { display: flex; align-items: center; gap: 1rem; }
+.placeholder-title-group { min-width: 0; flex: 1; }
+.placeholder-title-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .placeholder-icon { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 14px; background: #eef5ff; color: var(--navy); font-size: 1.8rem; }
 .placeholder-heading p { margin: 0 0 .25rem; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .placeholder-heading h1 { margin: 0; }
+.placeholder-title-row .ghost-button { white-space: nowrap; }
 .placeholder-copy { margin: 0; max-width: 760px; color: #41526b; font-weight: 700; }
 .placeholder-content { display: grid; gap: 1rem; }
 .basic-screen-panel, .dispatch-page-item { border: 1px solid var(--line); border-radius: 10px; background: #fbfdff; padding: 1rem; }
@@ -252,6 +266,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
   .placeholder-page { padding: .75rem; }
   .placeholder-card { min-height: auto; padding: 1rem; }
   .placeholder-heading { align-items: flex-start; }
+  .placeholder-title-row { align-items: stretch; flex-direction: column; }
   .placeholder-actions .secondary { width: 100%; }
 }
 
