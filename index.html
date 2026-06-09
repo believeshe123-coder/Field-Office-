@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Safeguard Services | Customer Portal</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <section id="login-screen" class="login-screen">
+      <form id="login-form" class="login-card">
+        <div class="brand-mark">★</div>
+        <h1>Safeguard Services</h1>
+        <p>Log in to open a client portal.</p>
+        <label>
+          Username
+          <input type="text" id="login-username" value="admin" autocomplete="username" required />
+        </label>
+        <label>
+          Password
+          <input type="password" id="login-password" value="admin" autocomplete="current-password" required />
+        </label>
+        <p id="login-error" class="login-error" role="alert" aria-live="polite"></p>
+        <button type="submit" class="primary full-width">Log In</button>
+      </form>
+    </section>
+
+    <div id="app-shell" class="app-shell hidden">
+      <header class="top-bar">
+        <div class="brand">
+          <div class="shield">★</div>
+          <div>
+            <strong>SAFEGUARD</strong>
+            <span>SERVICES</span>
+          </div>
+        </div>
+        <div class="welcome">👤 <span>Welcome, Admin</span></div>
+        <label class="client-picker">
+          Client:
+          <select id="client-select"></select>
+        </label>
+        <button id="logout-button" class="ghost-button">⇱ Logout</button>
+      </header>
+
+      <main class="portal-layout">
+        <aside class="contacts-panel card">
+          <div class="panel-title-row">
+            <h2>👥 Client Contacts</h2>
+            <button id="add-contact-button" class="primary small">＋ Add Contact</button>
+          </div>
+          <div class="search-wrap">
+            <input id="contact-search" type="search" placeholder="Search contacts..." />
+            <span>⌕</span>
+          </div>
+          <div id="contact-list" class="contact-list"></div>
+          <section id="contact-detail" class="contact-detail">Select a contact to view details.</section>
+        </aside>
+
+        <section class="workspace">
+          <div class="workspace-header card">
+            <h1>▥ <span id="portal-title">Customer Portal</span></h1>
+            <button id="tasks-button" class="secondary">▣ Tasks <span id="task-count"></span></button>
+          </div>
+
+          <section class="calendar-card card">
+            <div class="calendar-toolbar">
+              <div class="toolbar-group">
+                <button id="prev-date" class="icon-button">‹</button>
+                <button id="next-date" class="icon-button">›</button>
+                <button id="today-button">Today</button>
+                <button id="new-event-button" class="secondary">＋ Add Job</button>
+              </div>
+              <h2 id="calendar-title">Schedule</h2>
+              <div class="toolbar-group right-tools">
+                <div class="view-switcher" role="group" aria-label="Calendar view">
+                  <button data-view="day">Day</button>
+                  <button data-view="week" class="active">Week</button>
+                  <button data-view="month">Month</button>
+                  <button data-view="year">Year</button>
+                </div>
+                <button id="dispatch-button" class="primary">▣ Dispatch</button>
+              </div>
+            </div>
+            <div class="calendar-and-dispatch">
+              <div id="calendar-grid" class="calendar-grid"></div>
+              <aside id="dispatch-panel" class="dispatch-panel hidden">
+                <button id="close-dispatch" class="close-button" aria-label="Close dispatch">×</button>
+                <h3>Dispatch Review</h3>
+                <div id="dispatch-list" class="dispatch-list empty-dispatch">
+                  <div class="clipboard">▤</div>
+                  <p>Your dispatch list will appear here.</p>
+                  <small>Select a time range and click “Dispatch” to generate.</small>
+                </div>
+                <button id="print-dispatch" class="secondary full-width" disabled>▣ Print Dispatch</button>
+              </aside>
+            </div>
+          </section>
+
+          <section class="portal-links">
+            <button class="portal-link recruiting">
+              <span class="portal-icon">👥</span>
+              <span><strong>Recruiting Portal</strong><small>Access recruiting tools, applicant tracking, and hiring resources.</small></span>
+              <b>›</b>
+            </button>
+            <button class="portal-link records">
+              <span class="portal-icon">💵</span>
+              <span><strong>Invoicing / Records Portal</strong><small>View invoices, payment history, and important records.</small></span>
+              <b>›</b>
+            </button>
+          </section>
+        </section>
+      </main>
+
+      <footer class="change-log-bar">
+        <button id="change-log-toggle">◷ Change Log</button>
+        <span>All changes to contacts and schedule are logged for accountability and review.</span>
+      </footer>
+    </div>
+
+    <dialog id="contact-dialog">
+      <form id="contact-form" method="dialog" class="modal-form">
+        <h2 id="contact-dialog-title">Add Contact</h2>
+        <input type="hidden" id="contact-id" />
+        <div class="form-grid two-col">
+          <label>First name<input id="contact-first" required /></label>
+          <label>Last name<input id="contact-last" required /></label>
+        </div>
+        <div class="form-grid two-col">
+          <label>Phone number<input id="contact-phone" type="tel" required /></label>
+          <label>Email<input id="contact-email" type="email" required /></label>
+        </div>
+        <label>Best way to contact
+          <select id="contact-best">
+            <option>Phone</option><option>Email</option><option>Text</option><option>Any</option>
+          </select>
+        </label>
+        <label>What they are in charge of<textarea id="contact-role" rows="3"></textarea></label>
+        <label>Notes<textarea id="contact-notes" rows="3"></textarea></label>
+        <div class="modal-actions">
+          <button type="button" class="ghost-button" data-close-dialog>Cancel</button>
+          <button type="submit" class="primary">Save Contact</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="event-dialog">
+      <form id="event-form" method="dialog" class="modal-form">
+        <h2 id="event-dialog-title">Add Job</h2>
+        <input type="hidden" id="event-id" />
+        <label>Job name<input id="event-name" required /></label>
+        <label>Location<input id="event-location" required /></label>
+        <div class="form-grid two-col">
+          <label>Start time<input id="event-start" type="datetime-local" required /></label>
+          <label>End time<input id="event-end" type="datetime-local" required /></label>
+        </div>
+        <label>Job details<textarea id="event-details" rows="4" required></textarea></label>
+        <div class="modal-actions split-actions">
+          <button type="button" id="delete-event-button" class="danger hidden">Delete Job</button>
+          <span></span>
+          <button type="button" class="ghost-button" data-close-dialog>Cancel</button>
+          <button type="submit" class="primary">Save Job</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="log-dialog">
+      <section class="modal-form log-modal">
+        <h2>Client Change Log</h2>
+        <div id="change-log-list" class="change-log-list"></div>
+        <div class="modal-actions"><button class="primary" data-close-dialog>Close</button></div>
+      </section>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>
