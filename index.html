@@ -86,6 +86,28 @@
             <button type="button" data-main-view="tasks">Task <span id="task-count"></span></button>
           </div>
 
+          <section class="supabase-card card" aria-labelledby="supabase-title">
+            <div class="supabase-heading">
+              <div>
+                <h2 id="supabase-title">☁ Supabase Cloud Uploads</h2>
+                <p>Smoke-check the Supabase connection and upload client files to the <code>uploads</code> Storage bucket.</p>
+              </div>
+              <span id="supabase-status" class="cloud-status" aria-live="polite">Not checked</span>
+            </div>
+            <div class="cloud-actions">
+              <button id="supabase-check-button" class="secondary small" type="button">Check Connection</button>
+              <form id="upload-form" class="upload-form">
+                <label>
+                  Select file
+                  <input id="upload-file" type="file" required />
+                </label>
+                <button id="upload-button" class="primary small" type="submit">Upload File</button>
+              </form>
+            </div>
+            <p id="upload-message" class="upload-message" role="status" aria-live="polite"></p>
+            <div id="uploaded-files" class="uploaded-files" aria-live="polite"></div>
+          </section>
+
           <section id="schedule-main-view" class="calendar-card card">
             <div class="calendar-toolbar">
               <div class="toolbar-group">
@@ -226,6 +248,8 @@
       </section>
     </dialog>
 
-    <script src="script.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="node_modules/@supabase/supabase-js/dist/umd/supabase.js"></script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>

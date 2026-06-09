@@ -344,3 +344,30 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
   .task-form .primary { width: 100%; }
   .task-board-card { min-height: auto; }
 }
+
+.supabase-card { display: grid; gap: .85rem; padding: 1rem; }
+.supabase-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+.supabase-heading h2 { margin: 0; font-size: 1rem; color: var(--navy); }
+.supabase-heading p { margin: .25rem 0 0; color: var(--muted); font-weight: 700; }
+.supabase-heading code { background: #eef5ff; border-radius: 4px; padding: .1rem .3rem; }
+.cloud-status { border-radius: 999px; background: #eef5ff; color: var(--navy); font-size: .75rem; font-weight: 900; padding: .35rem .65rem; white-space: nowrap; }
+.cloud-status[data-status="success"] { background: #dcfce7; color: #166534; }
+.cloud-status[data-status="error"] { background: #fee2e2; color: #991b1b; }
+.cloud-status[data-status="pending"] { background: #fef3c7; color: #92400e; }
+.cloud-actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1rem; align-items: end; }
+.upload-form { display: grid; grid-template-columns: minmax(180px, 1fr) auto; gap: .65rem; align-items: end; }
+.upload-form label { color: var(--navy); font-size: .78rem; font-weight: 900; }
+.upload-message { margin: 0; color: #41526b; font-weight: 800; }
+.upload-message[data-status="error"] { color: #b42318; }
+.uploaded-files { display: grid; gap: .5rem; }
+.uploaded-file { border: 1px solid var(--line); border-radius: 8px; background: #fbfdff; display: grid; gap: .25rem; padding: .75rem; }
+.uploaded-file strong { color: var(--navy); }
+.uploaded-file small { color: var(--muted); font-weight: 800; }
+.uploaded-file code { color: #41526b; overflow-wrap: anywhere; }
+.uploaded-file a { color: var(--blue); font-weight: 900; text-decoration: none; }
+.empty-uploads { margin: 0; color: var(--muted); font-weight: 800; }
+
+@media (max-width: 780px) {
+  .cloud-actions, .upload-form, .supabase-heading { grid-template-columns: 1fr; display: grid; }
+  .upload-form .primary, .cloud-actions .secondary { width: 100%; }
+}
