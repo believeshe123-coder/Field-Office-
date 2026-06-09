@@ -76,7 +76,7 @@ h1, h2, h3 { color: var(--navy); text-transform: uppercase; }
 #memory-notes { min-height: 120px; width: 100%; }
 .memory-actions { display: flex; justify-content: flex-end; gap: .5rem; }
 
-.workspace { display: grid; grid-template-rows: auto 1fr auto; gap: 1rem; min-width: 0; }
+.workspace { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 1rem; min-width: 0; }
 .workspace-header { justify-content: space-between; padding: 1rem 1.25rem; }
 .portal-title-button { background: transparent; color: var(--navy); padding: 0; text-align: left; }
 .portal-title-button:hover, .portal-title-button:focus-visible { text-decoration: underline; text-underline-offset: .2rem; }
@@ -312,7 +312,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
   #print-dispatch, #close-dispatch, #back-to-dashboard, .placeholder-actions, .dispatch-range-toolbar { display: none; }
 }
 
-.main-view-switcher { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: white; box-shadow: 0 1px 4px rgba(16, 33, 63, .05); }
+.main-view-switcher { display: grid; grid-template-columns: 1fr 1fr; align-self: start; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: white; box-shadow: 0 1px 4px rgba(16, 33, 63, .05); }
 .main-view-switcher button { border-radius: 0; background: white; color: var(--navy); padding: .45rem .75rem; font-size: .78rem; }
 .main-view-switcher button.active { background: var(--navy); color: white; }
 .task-board-card { padding: 1rem; min-height: 610px; display: grid; grid-template-rows: auto 1fr; gap: 1rem; }
