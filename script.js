@@ -1,5 +1,6 @@
 const STORAGE_KEY = "safeguard-client-portal-state";
 const dayMs = 86_400_000;
+const hourMs = 3_600_000;
 const clients = ["Test 1", "Acme Logistics", "North Ridge Medical"];
 const deviceViews = ["auto", "computer", "tablet", "phone"];
 const portalPages = {
@@ -31,14 +32,14 @@ const portalPages = {
     icon: "▣",
     kicker: "Dispatching",
     title: "Dispatch Review",
-    copy: "Review the jobs in the current calendar view before printing or assigning dispatch coverage."
+    copy: "Review the schedules in the current calendar view before printing or assigning dispatch coverage."
   }
 };
 const state = loadState();
 let selectedClient = state.selectedClient || clients[0];
 let selectedContactId = null;
-let currentDate = startOfDay(new Date("2024-05-15T09:00:00"));
-let currentView = "week";
+let currentDate = startOfDay(new Date());
+let currentView = "month";
 let activeMainView = "schedule";
 let dispatchStartDate = null;
 let dispatchEndDate = null;
@@ -68,6 +69,8 @@ const els = {
   taskForm: document.querySelector("#task-form"),
   taskTitleInput: document.querySelector("#task-title-input"),
   taskBoard: document.querySelector("#task-board"),
+  doneTaskDialog: document.querySelector("#done-task-dialog"),
+  doneTaskList: document.querySelector("#done-task-list"),
   memoryNotes: document.querySelector("#memory-notes"),
   memoryStatus: document.querySelector("#memory-status"),
   saveMemoryButton: document.querySelector("#save-memory-button"),
@@ -86,7 +89,8 @@ const els = {
   dispatchList: document.querySelector("#dispatch-list"),
   printDispatch: document.querySelector("#print-dispatch"),
   logDialog: document.querySelector("#log-dialog"),
-  logList: document.querySelector("#change-log-list")
+  logList: document.querySelector("#change-log-list"),
+  eventFormError: document.querySelector("#event-form-error")
 };
 
 function loadState() {
@@ -190,7 +194,7 @@ function init() {
   document.querySelector("#next-date").addEventListener("click", () => moveDate(1));
   document.querySelector("#today-button").addEventListener("click", () => { currentDate = startOfDay(new Date()); renderCalendar(); });
   document.querySelectorAll(".view-switcher button").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
-  document.querySelector("#dispatch-button").addEventListener("click", () => openPortalPage("dispatch"));
+  document.querySelector("#dispatch-button").addEventListener("click", renderDispatch);
   document.querySelector("#close-dispatch").addEventListener("click", () => els.dispatchPanel.classList.add("hidden"));
   els.printDispatch.addEventListener("click", () => window.print());
   document.querySelector("#change-log-toggle").addEventListener("click", openLogDialog);
@@ -263,14 +267,15 @@ function addTask(event) {
 
 function renderTasks() {
   const columns = [
-    { status: "todo", title: "To Do" },
+    { status: "todo", title: "Haven't Started" },
     { status: "progress", title: "In Progress" },
-    { status: "done", title: "Done" }
+    { status: "done", title: "Done", archive: true }
   ];
   els.taskBoard.innerHTML = columns.map((column) => taskColumnTemplate(column)).join("");
   els.taskBoard.querySelectorAll(".task-card").forEach((card) => {
     card.addEventListener("dragstart", (event) => event.dataTransfer.setData("text/plain", card.dataset.taskId));
   });
+  els.taskBoard.querySelectorAll(".done-archive-button").forEach((button) => button.addEventListener("click", openDoneTaskArchive));
   els.taskBoard.querySelectorAll(".task-column").forEach((column) => {
     column.addEventListener("dragover", (event) => {
       event.preventDefault();
@@ -288,16 +293,26 @@ function renderTasks() {
 
 function taskColumnTemplate(column) {
   const tasks = clientData().tasks.filter((task) => task.status === column.status);
+  const archiveClass = column.archive ? " archive-column" : "";
   return `
-    <section class="task-column" data-status="${column.status}">
+    <section class="task-column${archiveClass}" data-status="${column.status}">
       <div class="task-column-header">
         <h3>${column.title}</h3>
         <span>${tasks.length}</span>
       </div>
       <div class="task-drop-zone">
-        ${tasks.length ? tasks.map(taskCardTemplate).join("") : `<p class="empty-task-column">Drop tasks here.</p>`}
+        ${column.archive ? doneArchiveTemplate(tasks) : tasks.length ? tasks.map(taskCardTemplate).join("") : `<p class="empty-task-column">Drop tasks here.</p>`}
       </div>
     </section>`;
+}
+
+function doneArchiveTemplate(tasks) {
+  return `
+    <button class="done-archive-button" type="button">
+      <strong>${tasks.length}</strong>
+      <span>Open Done Archive</span>
+      <small>Drop completed tasks here.</small>
+    </button>`;
 }
 
 function taskCardTemplate(task) {
@@ -313,8 +328,20 @@ function moveTask(taskId, status) {
   renderTasks();
 }
 
+function openDoneTaskArchive() {
+  const doneTasks = clientData().tasks
+    .filter((task) => task.status === "done")
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  els.doneTaskList.innerHTML = doneTasks.length ? doneTasks.map((task) => `
+    <article class="done-task-item">
+      <strong>${escapeHtml(task.title)}</strong>
+      <small>Added ${new Date(task.createdAt).toLocaleDateString()}</small>
+    </article>`).join("") : `<article class="done-task-item empty-done-archive">No completed tasks archived yet.</article>`;
+  els.doneTaskDialog.showModal();
+}
+
 function statusLabel(status) {
-  return { todo: "To Do", progress: "In Progress", done: "Done" }[status] || status;
+  return { todo: "Haven't Started", progress: "In Progress", done: "Done Archive" }[status] || status;
 }
 
 function openPortalPage(pageKey) {
@@ -388,7 +415,7 @@ function dispatchPageContent() {
       <aside class="dispatch-list-panel">
         <div class="dispatch-section-heading">
           <h2>Dispatch List</h2>
-          <small>${jobs.length} job(s) selected</small>
+          <small>${jobs.length} schedule(s) selected</small>
         </div>
         <div class="dispatch-page-list">${dispatchJobCards(jobs)}</div>
       </aside>
@@ -419,12 +446,12 @@ function dispatchCalendarGrid() {
 function jobsForDispatchRange() {
   const rangeEnd = addDays(dispatchEndDate, 1);
   return clientData().events
-    .filter((job) => new Date(job.start) >= dispatchStartDate && new Date(job.start) < rangeEnd)
+    .filter((job) => jobOverlapsRange(job, dispatchStartDate, rangeEnd))
     .sort((a, b) => new Date(a.start) - new Date(b.start));
 }
 
 function dispatchJobCards(jobs) {
-  if (!jobs.length) return `<article class="dispatch-page-item empty-dispatch"><div class="clipboard">▤</div><p>No jobs in this date range.</p><small>Change the range above or add a job from the main schedule.</small></article>`;
+  if (!jobs.length) return `<article class="dispatch-page-item empty-dispatch"><div class="clipboard">▤</div><p>No schedules in this date range.</p><small>Change the range above or add a schedule from the main calendar.</small></article>`;
   return jobs.map((job) => {
     const start = new Date(job.start);
     const classes = `dispatch-page-item ${sameDay(start, new Date()) ? "today" : ""}`;
@@ -532,14 +559,16 @@ function saveContact(event) {
 }
 
 function setView(view) {
+  if (!["day", "week", "month", "year"].includes(view)) return;
   currentView = view;
   document.querySelectorAll(".view-switcher button").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
   renderCalendar();
 }
 
 function moveDate(direction) {
-  const amount = currentView === "year" ? 365 : currentView === "month" ? 30 : currentView === "week" ? 7 : 1;
-  currentDate = addDays(currentDate, amount * direction);
+  if (currentView === "year") currentDate = addMonths(currentDate, 12 * direction);
+  else if (currentView === "month") currentDate = addMonths(currentDate, direction);
+  else currentDate = addDays(currentDate, (currentView === "week" ? 7 : 1) * direction);
   renderCalendar();
 }
 
@@ -563,8 +592,9 @@ function renderTimedGrid(days) {
     range.forEach((date) => {
       const cell = document.createElement("div");
       cell.className = `grid-cell ${sameDay(date, new Date()) ? "today" : ""}`;
-      cell.addEventListener("dblclick", () => openEventDialog(null, setHour(date, hour)));
-      eventsForDay(date).filter((job) => new Date(job.start).getHours() === hour).forEach((job) => cell.append(eventButton(job)));
+      cell.title = `Add a schedule on ${formatDate(date)} at ${formatHour(hour)}`;
+      cell.addEventListener("click", () => openEventDialog(null, setHour(date, hour)));
+      eventsForTimeSlot(date, hour).forEach((job) => cell.append(eventButton(job)));
       els.calendarGrid.append(cell);
     });
   }
@@ -581,7 +611,8 @@ function renderMonth() {
     const cell = document.createElement("div");
     cell.className = `month-day ${date.getMonth() === currentDate.getMonth() ? "" : "muted"} ${sameDay(date, new Date()) ? "today" : ""}`;
     cell.innerHTML = `<strong>${date.getDate()}</strong>`;
-    cell.addEventListener("dblclick", () => openEventDialog(null, setHour(date, 9)));
+    cell.title = `Add a schedule on ${formatDate(date)}`;
+    cell.addEventListener("click", () => openEventDialog(null, setHour(date, 9)));
     eventsForDay(date).slice(0, 3).forEach((job) => cell.append(eventButton(job)));
     els.calendarGrid.append(cell);
   }
@@ -613,7 +644,9 @@ function renderYear() {
 function eventButton(job) {
   const button = document.createElement("button");
   button.className = "event-chip";
-  button.innerHTML = `${escapeHtml(job.name)}<small>${formatTime(new Date(job.start))} · ${escapeHtml(job.location)}</small>`;
+  const start = new Date(job.start);
+  const end = eventEnd(job);
+  button.innerHTML = `${escapeHtml(job.name)}<small>${formatTime(start)}-${formatTime(end)} · ${escapeHtml(job.location)}</small>`;
   button.addEventListener("click", (event) => { event.stopPropagation(); openEventDialog(job); });
   return button;
 }
@@ -621,13 +654,14 @@ function eventButton(job) {
 function openEventDialog(job = null, defaultStart = new Date()) {
   const start = job ? new Date(job.start) : defaultStart;
   const end = job ? new Date(job.end) : new Date(start.getTime() + 60 * 60 * 1000);
-  document.querySelector("#event-dialog-title").textContent = job ? "Edit Job" : "Add Job";
+  document.querySelector("#event-dialog-title").textContent = job ? "Edit Schedule" : "Add Schedule";
   document.querySelector("#event-id").value = job?.id || "";
   document.querySelector("#event-name").value = job?.name || "";
   document.querySelector("#event-location").value = job?.location || "";
   document.querySelector("#event-start").value = toLocalInput(start);
   document.querySelector("#event-end").value = toLocalInput(end);
   document.querySelector("#event-details").value = job?.details || "";
+  els.eventFormError.textContent = "";
   document.querySelector("#delete-event-button").classList.toggle("hidden", !job);
   els.eventDialog.showModal();
 }
@@ -635,23 +669,34 @@ function openEventDialog(job = null, defaultStart = new Date()) {
 function saveEvent(event) {
   event.preventDefault();
   const id = document.querySelector("#event-id").value;
-  const job = {
-    id: id || crypto.randomUUID(),
+  const start = new Date(document.querySelector("#event-start").value);
+  const end = new Date(document.querySelector("#event-end").value);
+  const draft = {
     name: document.querySelector("#event-name").value.trim(),
     location: document.querySelector("#event-location").value.trim(),
-    start: new Date(document.querySelector("#event-start").value).toISOString(),
-    end: new Date(document.querySelector("#event-end").value).toISOString(),
     details: document.querySelector("#event-details").value.trim()
+  };
+  const validationError = validateJob(draft, start, end);
+  if (validationError) {
+    els.eventFormError.textContent = validationError;
+    return;
+  }
+  const job = {
+    id: id || crypto.randomUUID(),
+    ...draft,
+    start: start.toISOString(),
+    end: end.toISOString()
   };
   const events = clientData().events;
   const index = events.findIndex((existing) => existing.id === id);
   if (index >= 0) {
     events[index] = job;
-    logChange(`Updated scheduled job ${job.name}.`);
+    logChange(`Updated schedule ${job.name}.`);
   } else {
     events.push(job);
-    logChange(`Added scheduled job ${job.name}.`);
+    logChange(`Added schedule ${job.name}.`);
   }
+  currentDate = startOfDay(start);
   saveState();
   els.eventDialog.close();
   renderCalendar();
@@ -659,10 +704,11 @@ function saveEvent(event) {
 
 function deleteCurrentEvent() {
   const id = document.querySelector("#event-id").value;
+  if (!id) return els.eventDialog.close();
   const events = clientData().events;
   const job = events.find((existing) => existing.id === id);
   state.clients[selectedClient].events = events.filter((existing) => existing.id !== id);
-  logChange(`Removed scheduled job ${job?.name || "job"}.`);
+  logChange(`Removed schedule ${job?.name || "schedule"}.`);
   saveState();
   els.eventDialog.close();
   renderCalendar();
@@ -671,7 +717,7 @@ function deleteCurrentEvent() {
 function renderDispatch() {
   const [start, end] = visibleRange();
   const jobs = clientData().events
-    .filter((job) => new Date(job.start) >= start && new Date(job.start) < end)
+    .filter((job) => jobOverlapsRange(job, start, end))
     .sort((a, b) => new Date(a.start) - new Date(b.start));
   els.dispatchPanel.classList.remove("hidden");
   els.printDispatch.disabled = !jobs.length;
@@ -681,8 +727,8 @@ function renderDispatch() {
       <strong>${escapeHtml(job.name)} - ${escapeHtml(job.location)}</strong>
       <small>${formatDate(new Date(job.start))} at ${formatTime(new Date(job.start))}</small>
       <p>${escapeHtml(job.details)}</p>
-    </article>`).join("") : `<div class="clipboard">▤</div><p>No jobs in this view.</p><small>Add a job or change views to build a dispatch review.</small>`;
-  logChange(`Generated ${currentView} dispatch review with ${jobs.length} job(s).`);
+    </article>`).join("") : `<div class="clipboard">▤</div><p>No schedules in this view.</p><small>Add a schedule or change views to build a dispatch review.</small>`;
+  logChange(`Generated ${currentView} dispatch review with ${jobs.length} schedule(s).`);
 }
 
 function openLogDialog() {
@@ -699,22 +745,65 @@ function visibleRange() {
 }
 
 function eventsForDay(date) {
-  return clientData().events.filter((job) => sameDay(new Date(job.start), date)).sort((a, b) => new Date(a.start) - new Date(b.start));
+  const dayStart = startOfDay(date);
+  const dayEnd = addDays(dayStart, 1);
+  return clientData().events.filter((job) => jobOverlapsRange(job, dayStart, dayEnd)).sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+
+function eventsForTimeSlot(date, hour) {
+  const slotStart = setHour(date, hour);
+  const slotEnd = new Date(slotStart.getTime() + hourMs);
+  return clientData().events.filter((job) => jobOverlapsRange(job, slotStart, slotEnd)).sort((a, b) => new Date(a.start) - new Date(b.start));
 }
 
 function seedDemoEvents() {
   if (clientData().events.length) return;
-  clientData().events.push(
-    { id: crypto.randomUUID(), name: "Site Walk", location: "Main Gate", start: "2024-05-13T08:00:00.000Z", end: "2024-05-13T09:00:00.000Z", details: "Review weekly post orders with the client." },
-    { id: crypto.randomUUID(), name: "Guard Coverage", location: "Warehouse 2", start: "2024-05-15T12:00:00.000Z", end: "2024-05-15T18:00:00.000Z", details: "Provide lunch-to-close coverage for loading dock access." },
-    { id: crypto.randomUUID(), name: "Patrol Review", location: "North Lot", start: "2024-05-17T16:00:00.000Z", end: "2024-05-17T17:00:00.000Z", details: "Confirm vehicle patrol route and camera blind spots." }
-  );
+  const weekStart = startOfWeek(currentDate);
+  const demoJobs = [
+    { name: "Site Walk", location: "Main Gate", dayOffset: 1, startHour: 8, endHour: 9, details: "Review weekly post orders with the client." },
+    { name: "Guard Coverage", location: "Warehouse 2", dayOffset: 3, startHour: 12, endHour: 18, details: "Provide lunch-to-close coverage for loading dock access." },
+    { name: "Patrol Review", location: "North Lot", dayOffset: 5, startHour: 16, endHour: 17, details: "Confirm vehicle patrol route and camera blind spots." }
+  ];
+  clientData().events.push(...demoJobs.map((job) => {
+    const start = setHour(addDays(weekStart, job.dayOffset), job.startHour);
+    const end = setHour(addDays(weekStart, job.dayOffset), job.endHour);
+    return { id: crypto.randomUUID(), name: job.name, location: job.location, start: start.toISOString(), end: end.toISOString(), details: job.details };
+  }));
   saveState();
 }
 
+function validateJob(job, start, end) {
+  if (!job.name || !job.location || !job.details) return "Complete the schedule name, location, and details before saving.";
+  if (!isValidDate(start) || !isValidDate(end)) return "Enter valid start and end times for this schedule.";
+  if (end <= start) return "End time must be after start time.";
+  return "";
+}
+
+function jobOverlapsRange(job, rangeStart, rangeEnd) {
+  const start = new Date(job.start);
+  if (!isValidDate(start)) return false;
+  const end = eventEnd(job);
+  return start < rangeEnd && end > rangeStart;
+}
+
+function eventEnd(job) {
+  const start = new Date(job.start);
+  const end = new Date(job.end);
+  return isValidDate(end) && end > start ? end : new Date(start.getTime() + hourMs);
+}
+
+function isValidDate(date) { return date instanceof Date && !Number.isNaN(date.getTime()); }
 function startOfDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
 function startOfWeek(date) { return addDays(startOfDay(date), -date.getDay()); }
 function addDays(date, days) { return new Date(date.getTime() + days * dayMs); }
+function addMonths(date, months) {
+  const target = new Date(date);
+  const day = target.getDate();
+  target.setDate(1);
+  target.setMonth(target.getMonth() + months);
+  target.setDate(Math.min(day, new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()));
+  return startOfDay(target);
+}
 function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 function setHour(date, hour) { return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour); }
 function formatHour(hour) { return new Date(2024, 0, 1, hour).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
