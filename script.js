@@ -1,4 +1,5 @@
-const STORAGE_KEY = "safeguard-client-portal-state";
+const STORAGE_KEY = "field-office-client-portal-state";
+const LEGACY_STORAGE_KEY = "safeguard-client-portal-state";
 const dayMs = 86_400_000;
 const hourMs = 3_600_000;
 const clients = ["Test 1", "Acme Logistics", "North Ridge Medical"];
@@ -101,7 +102,8 @@ function loadState() {
     clients: Object.fromEntries(clients.map((client) => [client, { contacts: [], events: [], logs: [], memory: { notes: "", updatedAt: null }, tasks: [] }]))
   };
   try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const storedValue = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const stored = JSON.parse(storedValue);
     return stored ? mergeState(fallback, stored) : fallback;
   } catch {
     return fallback;
@@ -137,6 +139,7 @@ function normalizeMemory(memory) {
 function saveState() {
   state.selectedClient = selectedClient;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 function clientData() {
@@ -591,7 +594,7 @@ function renderTimedGrid(days) {
     els.calendarGrid.insertAdjacentHTML("beforeend", `<div class="grid-cell time-cell">${formatHour(hour)}</div>`);
     range.forEach((date) => {
       const cell = document.createElement("div");
-      cell.className = `grid-cell ${isCurrentHourSlot(date, hour) ? "today" : ""}`;
+      cell.className = `grid-cell ${isCurrentHourSlot(date, hour) ? "current-hour-slot" : ""}`;
       cell.title = `Add a schedule on ${formatDate(date)} at ${formatHour(hour)}`;
       cell.addEventListener("click", () => openEventDialog(null, setHour(date, hour)));
       eventsForTimeSlot(date, hour).forEach((job) => cell.append(eventButton(job)));
