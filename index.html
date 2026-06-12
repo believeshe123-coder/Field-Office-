@@ -49,7 +49,7 @@
         <aside class="contacts-panel card">
           <div class="panel-title-row">
             <h2>👥 Client Contacts</h2>
-            <button id="add-contact-button" class="primary small">＋ Add Contact</button>
+            <button id="add-contact-button" class="primary small" type="button">＋ Add Contact</button>
           </div>
           <div class="search-wrap">
             <input id="contact-search" type="search" placeholder="Search contacts..." />
@@ -89,24 +89,28 @@
           <section id="schedule-main-view" class="calendar-card card">
             <div class="calendar-toolbar">
               <div class="toolbar-group">
-                <button id="prev-date" class="icon-button">‹</button>
-                <button id="next-date" class="icon-button">›</button>
-                <button id="today-button">Today</button>
-                <button id="new-event-button" class="secondary">＋ Add Job</button>
+                <button id="prev-date" class="icon-button" type="button">‹</button>
+                <button id="next-date" class="icon-button" type="button">›</button>
+                <button id="today-button" type="button">Today</button>
+                <button id="new-event-button" class="secondary" type="button">＋ Add Schedule</button>
               </div>
               <h2 id="calendar-title">Schedule</h2>
               <div class="toolbar-group right-tools">
                 <div class="view-switcher" role="group" aria-label="Calendar view">
-                  <button data-view="day">Day</button>
-                  <button data-view="week" class="active">Week</button>
-                  <button data-view="month">Month</button>
-                  <button data-view="year">Year</button>
+                  <button data-view="day" type="button">Day</button>
+                  <button data-view="week" type="button">Week</button>
+                  <button data-view="month" class="active" type="button">Month</button>
+                  <button data-view="year" type="button">Year</button>
                 </div>
-                <button id="dispatch-button" class="primary">▣ Dispatch</button>
+                <button id="dispatch-button" class="primary" type="button">▣ Dispatch</button>
               </div>
             </div>
+            <section id="schedule-help" class="schedule-help" aria-label="Schedule instructions">
+              <strong>Calendar is ready.</strong>
+              <span>Click any date or time slot below to add a schedule, or use Add Schedule to pick an exact time.</span>
+            </section>
             <div class="calendar-and-dispatch">
-              <div id="calendar-grid" class="calendar-grid"></div>
+              <div id="calendar-grid" class="calendar-grid" aria-label="Interactive schedule calendar"></div>
               <aside id="dispatch-panel" class="dispatch-panel hidden">
                 <button id="close-dispatch" class="close-button" aria-label="Close dispatch">×</button>
                 <h3>Dispatch Review</h3>
@@ -124,7 +128,7 @@
             <div class="task-board-header">
               <div>
                 <h2>▣ Task Board</h2>
-                <p>Drag added tasks between To Do, In Progress, and Done.</p>
+                <p>Drag tasks from Haven't Started to In Progress. Drop completed tasks into the Done archive.</p>
               </div>
               <form id="task-form" class="task-form">
                 <input id="task-title-input" type="text" placeholder="Add a task..." required />
@@ -167,7 +171,7 @@
       </main>
 
       <footer class="change-log-bar">
-        <button id="change-log-toggle">◷ Change Log</button>
+        <button id="change-log-toggle" type="button">◷ Change Log</button>
         <span>All changes to contacts and schedule are logged for accountability and review.</span>
       </footer>
     </div>
@@ -198,22 +202,32 @@
       </form>
     </dialog>
 
+    <dialog id="done-task-dialog">
+      <section class="modal-form log-modal">
+        <h2>Done Archive</h2>
+        <p class="archive-helper">Completed tasks live here after they are dropped into Done.</p>
+        <div id="done-task-list" class="done-task-list"></div>
+        <div class="modal-actions"><button class="primary" type="button" data-close-dialog>Close</button></div>
+      </section>
+    </dialog>
+
     <dialog id="event-dialog">
       <form id="event-form" method="dialog" class="modal-form">
-        <h2 id="event-dialog-title">Add Job</h2>
+        <h2 id="event-dialog-title">Add Schedule</h2>
         <input type="hidden" id="event-id" />
-        <label>Job name<input id="event-name" required /></label>
+        <label>Schedule name<input id="event-name" required /></label>
         <label>Location<input id="event-location" required /></label>
         <div class="form-grid two-col">
           <label>Start time<input id="event-start" type="datetime-local" required /></label>
           <label>End time<input id="event-end" type="datetime-local" required /></label>
         </div>
-        <label>Job details<textarea id="event-details" rows="4" required></textarea></label>
+        <label>Schedule details<textarea id="event-details" rows="4" required></textarea></label>
+        <p id="event-form-error" class="form-error" role="alert" aria-live="polite"></p>
         <div class="modal-actions split-actions">
-          <button type="button" id="delete-event-button" class="danger hidden">Delete Job</button>
+          <button type="button" id="delete-event-button" class="danger hidden">Delete Schedule</button>
           <span></span>
           <button type="button" class="ghost-button" data-close-dialog>Cancel</button>
-          <button type="submit" class="primary">Save Job</button>
+          <button type="submit" class="primary">Save Schedule</button>
         </div>
       </form>
     </dialog>
@@ -222,7 +236,7 @@
       <section class="modal-form log-modal">
         <h2>Client Change Log</h2>
         <div id="change-log-list" class="change-log-list"></div>
-        <div class="modal-actions"><button class="primary" data-close-dialog>Close</button></div>
+        <div class="modal-actions"><button class="primary" type="button" data-close-dialog>Close</button></div>
       </section>
     </dialog>
 

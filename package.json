@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "python3 -m http.server 4173",
-    "test": "node --check script.js"
+    "test": "node --check script.js && node tests/static-smoke.mjs"
   },
   "type": "module"
 }
