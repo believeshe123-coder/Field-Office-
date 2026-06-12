@@ -277,7 +277,7 @@ dialog::backdrop { background: rgba(2, 21, 46, .52); }
 }
 
 
-.day-head.today, .grid-cell.today, .month-day.today, .mini-days span.today {
+.current-hour-slot, .month-day.today, .mini-days span.today {
   box-shadow: inset 0 0 0 2px #f4b400;
   background: #fff8df;
 }
