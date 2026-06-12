@@ -68,6 +68,10 @@ assert(html.includes("Calendar is ready."), "Schedule helper should explain how 
 assert(script.includes("Haven't Started"), "Task board should show a Haven't Started column");
 assert(script.includes("In Progress"), "Task board should show an In Progress column");
 assert(script.includes("function doneArchiveTemplate"), "Task board should render Done as an archive drop target");
+
+assert(script.includes("function isCurrentHourSlot"), "Timed calendar views should isolate the today highlight to the current hour slot");
+assert(script.includes('cell.className = `grid-cell ${isCurrentHourSlot(date, hour) ? "today" : ""}`'), "Timed calendar cells should only highlight the current hour on today");
+assert(!script.includes('day-head ${sameDay(date, new Date()) ? "today" : ""}'), "Timed calendar day headers should not use the today highlight");
 assert(script.includes("function openDoneTaskArchive"), "Done archive should be clickable/openable");
 assert(stylesheet.includes(".archive-column"), "Done archive should use skinny archive column styling");
 
