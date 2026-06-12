@@ -586,12 +586,12 @@ function renderTimedGrid(days) {
   els.calendarTitle.textContent = days === 1 ? formatDate(start) : `${formatDate(range[0])} - ${formatDate(range[range.length - 1])}`;
   els.calendarGrid.classList.add(days === 1 ? "day-grid" : "week-grid");
   els.calendarGrid.style.setProperty("--days", days);
-  els.calendarGrid.innerHTML = `<div class="grid-cell day-head"></div>${range.map((date) => `<div class="grid-cell day-head ${sameDay(date, new Date()) ? "today" : ""}">${weekday(date)}<br>${shortDate(date)}</div>`).join("")}`;
+  els.calendarGrid.innerHTML = `<div class="grid-cell day-head"></div>${range.map((date) => `<div class="grid-cell day-head">${weekday(date)}<br>${shortDate(date)}</div>`).join("")}`;
   for (let hour = 0; hour <= 23; hour += 1) {
     els.calendarGrid.insertAdjacentHTML("beforeend", `<div class="grid-cell time-cell">${formatHour(hour)}</div>`);
     range.forEach((date) => {
       const cell = document.createElement("div");
-      cell.className = `grid-cell ${sameDay(date, new Date()) ? "today" : ""}`;
+      cell.className = `grid-cell ${isCurrentHourSlot(date, hour) ? "today" : ""}`;
       cell.title = `Add a schedule on ${formatDate(date)} at ${formatHour(hour)}`;
       cell.addEventListener("click", () => openEventDialog(null, setHour(date, hour)));
       eventsForTimeSlot(date, hour).forEach((job) => cell.append(eventButton(job)));
@@ -748,6 +748,11 @@ function eventsForDay(date) {
   const dayStart = startOfDay(date);
   const dayEnd = addDays(dayStart, 1);
   return clientData().events.filter((job) => jobOverlapsRange(job, dayStart, dayEnd)).sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+
+function isCurrentHourSlot(date, hour) {
+  const now = new Date();
+  return sameDay(date, now) && hour === now.getHours();
 }
 
 function eventsForTimeSlot(date, hour) {
