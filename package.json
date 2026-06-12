@@ -4,12 +4,8 @@
   "description": "Safeguard Services client portal mockup with contacts, calendar scheduling, dispatch, and change log.",
   "private": true,
   "scripts": {
-    "supabase:config": "node scripts/write-supabase-config.mjs",
-    "start": "npm run supabase:config && python3 -m http.server 4173",
-    "test": "node --check script.js && node scripts/write-supabase-config.mjs"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.108.1"
+    "start": "python3 -m http.server 4173",
+    "test": "node --check script.js"
   },
   "type": "module"
 }
